@@ -1,0 +1,24 @@
+client
+dev tun
+proto udp
+remote ${endpoint} 443
+remote-random-hostname
+resolv-retry infinite
+nobind
+remote-cert-tls server
+cipher AES-256-GCM
+verb 3
+<ca>
+${vpn_ca_cert}
+</ca>
+
+<cert>
+${vpn_client_cert}
+</cert>
+
+<key>
+${vpn_client_key}
+</key>
+
+
+reneg-sec 0

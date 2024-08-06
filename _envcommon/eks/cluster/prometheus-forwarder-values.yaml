@@ -1,0 +1,65 @@
+serviceAccounts:
+  server:
+    name: "amp"
+    # name: "amp-iamproxy-ingest-service-account"
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::${account_id}:role/${role_name}"
+
+alertmanager:
+  enabled: false
+
+server:
+
+  ## Prometheus server container image
+  ##
+  image:
+    repository: quay.io/prometheus/prometheus
+    tag: v2.36.2
+
+  remoteWrite:
+    - url: ${workspace_prometheus_endpoint}/api/v1/remote_write
+      sigv4:
+        region: ${management_region}
+        role_arn: arn:aws:iam::${management_account_id}:role/${prometheus_role_name}
+      queue_config:
+        max_samples_per_send: 1000
+        max_shards: 200
+        capacity: 2500
+
+  tolerations:
+    - key: "dedicated"
+      operator: "Equal"
+      value: "logging"
+      effect: "NoSchedule"
+
+  nodeSelector:
+    Environment: logging
+
+  persistentVolume:
+    ## If true, Prometheus server will create/use a Persistent Volume Claim
+    ## If false, use emptyDir
+    ##
+    enabled: true
+
+    ## Prometheus server data Persistent Volume mount root path
+    ##
+    mountPath: /data
+
+    ## Prometheus server data Persistent Volume size
+    ##
+    size: 100Gi
+
+  resources:
+    limits:
+      cpu: 4000m
+      memory: 16Gi
+    requests:
+      cpu: 2000m
+      memory: 10Gi
+
+nodeExporter:
+  enabled: true
+
+  tolerations:
+    - operator: "Exists"
+      effect: "NoSchedule"
